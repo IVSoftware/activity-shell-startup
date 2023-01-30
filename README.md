@@ -1,4 +1,4 @@
-Consider using a command line argument to specify the form you want. Then:
+Consider using a command line argument to specify the form you want. Then one of:
 
 - Run from command line: `activity-shell.exe "Cars"`
 - Run from a Shortcut, where Target property is appended with "Cars"
@@ -21,13 +21,12 @@ This won't change the `Application.Run(new MainForm())` command however, *even i
             Application.Run(new MainForm());
         }
     }
-
 ***
 In this particular example, the `Main` snippet in Program.cs routes the command line argument to a value defined a Settings file that has been added to the application. (This could also be useful to "remember" the form visible the last time the app closed in order to start with the same view.)
 
 [![settings][1]][1]
 ***
-For this routing to work requires forcing a `Handle` in the CTor of the main form. Usually, the `Handle` is created when the main form becomes visible, but in this case there's no guarantee that it will ever be shown. An override to `SetVisibleCore` prevents the main form from becoming visible is a different form is specified for startup.
+For this routing to work requires forcing a `Handle` in the CTor of the main form. Usually, the `Handle` is created when the main form becomes visible, but in this case there's no guarantee that it will ever be shown. An override to `SetVisibleCore` _prevents_ the main form from becoming visible if a _different_ form is specified for startup.
 
     public partial class MainForm : Form
     {
@@ -58,10 +57,14 @@ For this routing to work requires forcing a `Handle` in the CTor of the main for
         {
             base.SetVisibleCore(value && isVisibleOnStartup());
         }
+        .
+        .
+        .
+    }
 ***
 **Extensions**
 
-The `SwapForm()` and `GetForm()` calls are extension methods that can be called by any `Form` in the app.
+`SwapForm()` and `GetForm()` are extension methods. These can be called by any `Form` in the app. However, functionality requires class name to end in "Form".
 
     static class Extensions
     {
@@ -101,13 +104,46 @@ The `SwapForm()` and `GetForm()` calls are extension methods that can be called 
     }
 
 ***
+**Typical `OnLoad` override**
+
+    protected override void OnLoad(EventArgs e)
+    {
+        base.OnLoad(e);
+        labelTitle.Text = GetType().Name.Replace("Form", " Form");
+        labelMenu.Font = Glyphs;
+        labelMenu.Text = "\uE801";
+        labelIcon.Font = Glyphs;
+        labelIcon.Text = "\uE805";
+        labelMenu.Click += (sender, e) => {
+            contextMenuStrip.Show(labelMenu.PointToScreen(
+                new Point(
+                    -100,
+                    labelMenu.Height
+                )));
+        };
+        contextMenuStrip.ItemClicked += (sender, e) =>
+        {
+            if (e.ClickedItem.Text.Equals("Exit"))
+            {
+                Settings.Default.StartupForm = GetType().Name;
+                Settings.Default.Save();
+                Application.Exit();
+            }
+            else
+            {
+                this.SwapForm(e.ClickedItem.Text.GetForm());
+            }
+        };
+    }
+
+***
+If _no_ command line argument is present, the app will start up with the form that was visible the last time the app closed. Images are also shown for a couple of different various ways to set the command line.
+
 [![normal start][2]][2]
 ***
 [![shortcut start][3]][3]
 ***
 [![launch profile][4]][4]
-***
-*If no command line argument is present, the app will start up with the form that was visible the last time the app closed.*
 
   [1]: https://i.stack.imgur.com/sxjxp.png
   [2]: https://i.stack.imgur.com/jEcKM.png
