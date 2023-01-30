@@ -1,10 +1,14 @@
-Consider using a command line argument to specify the form you want. Then one of:
+Consider implementing the use of an optional command line argument as explained below. This would provide a flexible way to specify the form you want on-the-fly. For purposes of example, suppose one of the app forms is named `CarsForm`. This could be specified as the startup form in a variety of ways such as:
 
-- Run from command line: `activity-shell.exe "Cars"`
 - Run from a Shortcut, where Target property is appended with "Cars"
-- For debugging, set the Command Line Arguments using a Launch Profile
+- Run from command line: `activity-shell.exe "Cars"
+- For debugging, set the Command Line Arguments to "Cars" using a Launch Profile
 
-This won't change the `Application.Run(new MainForm())` command however, *even if the goal is to start with a different form*.
+In the absence of a command line argument, the implementation below shows the `MainForm` if this is the _first_ time the app is run _or_ the form that was visible on close the _last_ time the app was run.
+
+***
+Even if the goal is to start with a different form,
+this shouldn't change the `Application.Run(new MainForm())` command. It's just that we're providing a means to startup with "some other" form.
 
     internal static class Program
     {
@@ -104,7 +108,7 @@ For this routing to work requires forcing a `Handle` in the CTor of the main for
     }
 
 ***
-**Typical `OnLoad` override**
+**Typical `OnLoad` override for application Forms**
 
     protected override void OnLoad(EventArgs e)
     {
